@@ -1,0 +1,10 @@
+__pycache__
+venv
+.dockerignore
+.env
+.git
+.gitignore
+.python-version
+Dockerfile.multistage
+Makefile
+README.md

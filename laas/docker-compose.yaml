@@ -1,0 +1,46 @@
+services:
+  datomic-transactor:
+    build:
+      context: ./datomic/transactor
+      dockerfile: Dockerfile
+    container_name: datomic-transactor
+    ports:
+      - "4334:4334"
+      - "4335:4335"
+      - "4336:4336"
+    volumes:
+      - datomic_data:/var/lib/datomic/data
+      - ./datomic/transactor/config:/datomic/transactor/config
+    command: bin/transactor /datomic/transactor/config/transactor.properties
+
+  datomic-console:
+    build:
+      context: ./datomic/console
+      dockerfile: Dockerfile
+    container_name: datomic-console
+    depends_on:
+      - datomic-transactor
+    ports:
+      - "9000:8080"
+    command: bin/console -p 8080 dev datomic:dev://datomic-transactor:4334
+
+  backend:
+    container_name: backend
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile.multistage
+    env_file:
+      - ./apps/backend/.env
+    environment:
+      - DATOMIC_HOST=datomic-transactor
+    restart: always
+    ports:
+      - 8000:8000
+    depends_on:
+      - datomic-transactor
+    volumes:
+      - backend_data:/var/lib/backend/data
+
+volumes:
+  datomic_data:
+  backend_data:
